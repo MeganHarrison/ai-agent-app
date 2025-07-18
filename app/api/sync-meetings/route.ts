@@ -21,12 +21,11 @@ export async function POST(request: NextRequest) {
                 displayName
                 email
               }
-              transcript {
-                sentences {
-                  text
-                  speaker_name
-                  start_time
-                }
+              transcript_url
+              sentences {
+                text
+                speaker_name
+                start_time
               }
             }
           }
@@ -147,7 +146,7 @@ attendees: ${attendees}
 
 ## Transcript
 
-${transcript.transcript?.sentences?.map((sentence: any, index: number) => {
+${transcript.sentences?.map((sentence: any, index: number) => {
   const timestamp = sentence.start_time ? `[${Math.floor(sentence.start_time / 60)}:${String(Math.floor(sentence.start_time % 60)).padStart(2, '0')}]` : '';
   return `${timestamp} **${sentence.speaker_name}:** ${sentence.text}`;
 }).join('\n\n') || 'No transcript content available.'}

@@ -2,6 +2,39 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Overview
+### RAG AI Chat Agent
+AutoRag created in cloudflare workers. Frontend chat interface searches a vector database that includes business documents as well as meeting transcripts imported from Fireflies api. 
+Most of the titles use the naming convention date_meeting_name.md (ex: 2025-07-15 - Goodwill Bloomington Morning Meeting.md). 
+
+The beginning of the files include the following if it is a meeting transcript. 
+Title
+Meeting ID
+Date
+Duration
+Transcript Link
+Participants
+Transcript Text
+
+Example:
+Goodwill Bloomington Exterior Design Meeting
+Meeting ID: 01JZGD41X5JE6S3QGEAED0527W
+Date: 2025-07-08
+Duration: 10.489999771118164 minutes
+Transcript: [View Transcript](https://app.fireflies.ai/view/01JZGD41X5JE6S3QGEAED0527W)
+Participants: greulice@bloomington.in.gov, amulder@goodwillindy.org, jerome.daksiewicz@dkgrar.com, jdawson@alleatogroup.com, jcurtin@alleatogroup.com
+Transcript:
+
+#### Improvements
+Create a data extraction and indexing system for Cloudflare Workers RAG agent that automatically extracts meaningful metadata from every document, creating multiple searchable dimensions that make finding information lightning-fast.
+
+##### Key Benefits:
+Smart Categorization - Automatically classifies documents by project, department, priority, and type
+Enhanced Search - Find documents by date ranges, participants, action items, or any metadata field
+Business Intelligence - Track project activity, meeting frequency, and content analytics
+Context-Aware Responses - The AI gets richer context about which documents to reference
+
+
 ## Development Commands
 
 Run development server:
@@ -9,6 +42,26 @@ Run development server:
 cd ai-agent-app
 npm run dev
 ```
+
+## Assistant Guidelines
+
+### Command Output Reporting
+**Rule: Only report what command outputs actually show, not what I expect them to show.**
+
+When a command executes:
+- ✅ **Report exactly what the output says** - no more, no less
+- ❌ **Don't infer success details** from file contents or my expectations
+- ❌ **Don't assume what was created/modified** unless explicitly shown
+- ❌ **Don't add checkmarks or success summaries** based on assumptions
+
+**Example:**
+- Bad: "✅ Database tables created successfully with indexes and triggers"
+- Good: "Command executed successfully. 9 SQL commands ran without errors."
+
+**To verify actual results:**
+- Suggest specific verification commands when needed
+- Read actual output files if they exist
+- Only state what I can directly observe
 
 Build for production:
 ```bash

@@ -98,3 +98,24 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 ## License
 
 MIT
+
+## Cloudflare Resources
+
+### AutoRAG
+alleato-docs
+
+### D1 databases 
+alleato id:fc7c9a6d-ca65-4768-b3f9-07ec5afb38c5
+meeting-metadata id:c36bea3c-152a-4b89-b4de-ad193ef40c5e
+
+CREATE TABLE meetings (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    date TEXT NOT NULL,
+    duration INTEGER,
+    participants TEXT,
+    fireflies_id TEXT UNIQUE,
+    summary TEXT,
+    autorag_doc_ids TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)

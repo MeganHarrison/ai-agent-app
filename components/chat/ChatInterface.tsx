@@ -44,7 +44,12 @@ export default function ChatInterface() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!input.trim()) return;
@@ -195,7 +200,7 @@ export default function ChatInterface() {
                         )}
                       </div>
                       <span className="text-xs opacity-70 mt-2 block">
-                        {message.timestamp.toLocaleTimeString()}
+                        {isClient ? message.timestamp.toLocaleTimeString() : ''}
                       </span>
                     </div>
                   </div>
