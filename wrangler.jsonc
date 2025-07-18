@@ -1,0 +1,15 @@
+{
+  "name": "ai-agent-app",
+  "main": "src/index.js",
+  "compatibility_date": "2023-12-01",
+  "env": {
+    "production": {
+      "name": "ai-agent-app-prod",
+      "vars": { "NODE_ENV": "production" }
+    },
+    "staging": {
+      "name": "ai-agent-app-staging",
+      "vars": { "NODE_ENV": "staging" }
+    }
+  }
+}
