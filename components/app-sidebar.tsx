@@ -38,7 +38,7 @@ const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "/favicon.ico",
   },
   navMain: [
     {
@@ -157,7 +157,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <Link href="/">
-                <IconInnerShadowTop className="!size-5" />
+                <img src="/favicon.ico" alt="Alleato logo" className="w-6 h-6 mr-2 inline-block align-middle" />
                 <span className="text-base font-semibold">Alleato</span>
               </Link>
             </SidebarMenuButton>

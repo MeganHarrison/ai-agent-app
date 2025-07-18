@@ -32,22 +32,6 @@ import {
   RefreshCw,
   Tag
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  IconChevronDown,
-  IconLayoutColumns,
-} from "@tabler/icons-react"
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs"
 
 interface Document {
   id: string;
@@ -169,17 +153,11 @@ const typeColors = {
   'memo': 'bg-orange-100 text-orange-800'
 };
 
-const priorityColors = {
-  'low': 'bg-gray-100 text-gray-800',
-  'medium': 'bg-yellow-100 text-yellow-800',
-  'high': 'bg-red-100 text-red-800'
-};
-
-const statusColors = {
-  'draft': 'bg-gray-100 text-gray-800',
-  'review': 'bg-blue-100 text-blue-800',
-  'completed': 'bg-green-100 text-green-800',
-  'archived': 'bg-purple-100 text-purple-800'
+const typeDisplayNames = {
+  'meeting-transcript': 'Meeting',
+  'business-document': 'Operations',
+  'report': 'Report',
+  'memo': 'Memo'
 };
 
 export default function DocumentsPage() {
@@ -188,35 +166,67 @@ export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [isMounted, setIsMounted] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Load documents on component mount
   useEffect(() => {
     loadDocuments();
   }, []);
 
-  const loadDocuments = async () => {
-    setIsLoading(true);
+  const loadDocuments = async (cursor?: string, append = false) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
+    
     try {
-      const response = await fetch('/api/documents');
+      const url = cursor ? `/api/documents?cursor=${encodeURIComponent(cursor)}` : '/api/documents';
+      const response = await fetch(url);
       const data = await response.json();
       
       if (response.ok) {
-        setDocuments(data.documents || []);
+        if (append) {
+          setDocuments(prev => [...prev, ...(data.documents || [])]);
+        } else {
+          setDocuments(data.documents || []);
+        }
+        setNextCursor(data.nextCursor || null);
+        setHasMore(data.hasMore || false);
       } else {
         console.error('Failed to load documents:', data.error);
         // Fall back to mock data for development
-        setDocuments(mockDocuments);
+        if (!append) {
+          setDocuments(mockDocuments);
+          setHasMore(false);
+          setNextCursor(null);
+        }
       }
     } catch (error) {
       console.error('Error loading documents:', error);
       // Fall back to mock data for development
-      setDocuments(mockDocuments);
+      if (!append) {
+        setDocuments(mockDocuments);
+        setHasMore(false);
+        setNextCursor(null);
+      }
     } finally {
-      setIsLoading(false);
+      if (append) {
+        setIsLoadingMore(false);
+      } else {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -244,14 +254,9 @@ export default function DocumentsPage() {
       filtered = filtered.filter(doc => doc.department === departmentFilter);
     }
 
-    // Priority filter
-    if (priorityFilter !== 'all') {
-      filtered = filtered.filter(doc => doc.priority === priorityFilter);
-    }
-
     setFilteredDocuments(filtered);
     setCurrentPage(1); // Reset to first page when filters change
-  }, [documents, searchTerm, typeFilter, departmentFilter, priorityFilter]);
+  }, [documents, searchTerm, typeFilter, departmentFilter]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
@@ -264,11 +269,12 @@ export default function DocumentsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    // Use a consistent format to avoid hydration mismatch
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = date.toLocaleString('default', { month: 'short' });
+    const day = date.getDate();
+    return `${month} ${day}, ${year}`;
   };
 
   const getUniqueValues = (key: keyof Document) => {
@@ -295,14 +301,18 @@ export default function DocumentsPage() {
         </Button>
       </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-4">
+      {/* Filters */}
+        <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
             Filters & Search
           </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search documents, summaries, tags..."
                   value={searchTerm}
@@ -318,8 +328,8 @@ export default function DocumentsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="meeting-transcript">Meeting Transcripts</SelectItem>
-                <SelectItem value="business-document">Business Documents</SelectItem>
+                <SelectItem value="meeting-transcript">Meetings</SelectItem>
+                <SelectItem value="business-document">Operations</SelectItem>
                 <SelectItem value="report">Reports</SelectItem>
                 <SelectItem value="memo">Memos</SelectItem>
               </SelectContent>
@@ -339,38 +349,37 @@ export default function DocumentsPage() {
               </SelectContent>
             </Select>
             
-            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-
             <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">Show:</span>
-            <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
-              <SelectTrigger className="w-20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
+              <span className="text-sm text-gray-500">Show:</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(value) => setItemsPerPage(Number(value))}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="200">200</SelectItem>
+                  <SelectItem value="500">All</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-
-          </div>
-
+        </CardContent>
 
       {/* Documents Table */}
-
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>
+            Documents ({filteredDocuments.length} loaded{hasMore ? '+' : ''})
+            {filteredDocuments.length > itemsPerPage && (
+              <span className="text-sm font-normal text-gray-500 ml-2">
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredDocuments.length)}
+              </span>
+            )}
+          </CardTitle>
+        </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -381,124 +390,149 @@ export default function DocumentsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[300px]">Document</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="w-[400px]">Summary</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentDocuments.map((doc) => (
-                  <TableRow key={doc.id}>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="font-medium text-sm">{doc.title}</p>
-                        <p className="text-xs text-gray-500">{doc.filename}</p>
-                        {doc.duration && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Clock className="h-3 w-3" />
-                            {doc.duration}
-                          </div>
-                        )}
-                        {doc.participants && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Users className="h-3 w-3" />
-                            {doc.participants.length} participants
-                          </div>
-                        )}
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {doc.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                          {doc.tags.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{doc.tags.length - 3}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={typeColors[doc.type]}>
-                        {doc.type.replace('-', ' ')}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{doc.category}</span>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-gray-600 line-clamp-3">
-                        {doc.summary}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm">{formatDate(doc.date)}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm capitalize">
-                        {doc.department.replace('-', ' ')}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={priorityColors[doc.priority]}>
-                        {doc.priority}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[doc.status]}>
-                        {doc.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => window.open(doc.url, '_blank')}
-                          className="flex items-center gap-1"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          View
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            // Implement download functionality
-                            const link = document.createElement('a');
-                            link.href = doc.url;
-                            link.download = doc.filename;
-                            link.click();
-                          }}
-                        >
-                          <Download className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[250px]">Document</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="w-[300px]">Summary</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            
-            {filteredDocuments.length === 0 && !isLoading && (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No documents found matching your criteria.</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Try adjusting your search terms or filters.
-                </p>
-              </div>
-            )}
+                </TableHeader>
+                <TableBody>
+                  {currentDocuments.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium text-sm">{doc.title}</p>
+                          {(doc.duration || doc.participants) && (
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
+                              {doc.duration && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {doc.duration}
+                                </div>
+                              )}
+                              {doc.participants && (
+                                <div className="flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {doc.participants.length} participants
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {doc.tags.slice(0, 3).map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                            {doc.tags.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{doc.tags.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {isMounted ? formatDate(doc.date) : doc.date}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={typeColors[doc.type]}>
+                          {typeDisplayNames[doc.type]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{doc.category}</span>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-gray-600 line-clamp-3">
+                          {doc.summary}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm capitalize">
+                          {doc.department.replace('-', ' ')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (typeof window !== 'undefined') {
+                                window.open(doc.url, '_blank');
+                              }
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <ExternalLink className="h-3 w-3" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              // Implement download functionality
+                              if (typeof window !== 'undefined') {
+                                const link = document.createElement('a');
+                                link.href = doc.url;
+                                link.download = doc.filename;
+                                link.click();
+                              }
+                            }}
+                          >
+                            <Download className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {filteredDocuments.length === 0 && !isLoading && (
+                <div className="text-center py-8">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">No documents found matching your criteria.</p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Try adjusting your search terms or filters.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Load More Button */}
+          {hasMore && !isLoading && (
+            <div className="flex justify-center mt-6">
+              <Button
+                onClick={() => loadDocuments(nextCursor || undefined, true)}
+                disabled={isLoadingMore}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                {isLoadingMore ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Loading More...
+                  </>
+                ) : (
+                  <>
+                    Load More Documents
+                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                      +{itemsPerPage} more
+                    </span>
+                  </>
+                )}
+              </Button>
             </div>
           )}
           
@@ -558,6 +592,7 @@ export default function DocumentsPage() {
             </div>
           )}
         </CardContent>
+      </Card>
     </div>
   );
 }
