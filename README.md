@@ -1,13 +1,14 @@
 # AI Agent App
 
-An intelligent document assistant powered by Cloudflare AutoRAG with Fireflies.ai meeting transcription integration.
+An intelligent business assistant powered by Cloudflare AutoRAG with automated meeting transcription and project intelligence.
 
 ## Features
 
-- 🤖 **AI-Powered Chat Interface** - Query your documents using natural language
+- 🤖 **AI-Powered Chat Interface** - Query your documents and meetings using natural language
 - 📄 **Document Search** - Powered by Cloudflare AutoRAG for intelligent document retrieval
 - 🎙️ **Meeting Sync** - Automatically sync and index Fireflies.ai meeting transcripts
-- 📊 **Analytics Dashboard** - Track usage metrics and activity
+- 📊 **Project Dashboard** - Track project health, metrics, and insights
+- 📈 **Business Intelligence** - AI-generated insights from meetings and documents
 - 🎨 **Modern UI** - Built with Next.js 15, React 19, and Tailwind CSS
 
 ## Tech Stack
@@ -62,16 +63,24 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ```
 ai-agent-app/
-├── app/                  # Next.js app directory
-│   ├── api/             # API routes
-│   │   ├── chat/        # Chat endpoint for AutoRAG
-│   │   └── sync-meetings/ # Fireflies sync endpoint
-│   └── page.tsx         # Main page
-├── components/          # React components
-│   ├── chat/           # Chat interface components
-│   └── dashboard/      # Analytics dashboard
-├── lib/                # Utility functions
-└── public/             # Static assets
+├── app/                      # Next.js app directory
+│   ├── api/                 # API routes
+│   │   ├── chat/           # Chat endpoint for AutoRAG
+│   │   ├── documents/      # Document management
+│   │   └── sync-meetings/  # Fireflies sync endpoint
+│   ├── dashboard/          # Dashboard pages
+│   └── tables/             # Data table views
+├── components/              # React components
+│   ├── chat/               # Chat interface components
+│   ├── dashboard/          # Analytics dashboard
+│   └── ui/                 # Reusable UI components
+├── docs/                    # Documentation
+├── lib/                     # Utility functions
+│   └── workers-reference/  # Cloudflare Workers references
+├── public/                  # Static assets
+├── schema/                  # Database schemas
+├── scripts/                 # Utility scripts
+└── workers/                 # Cloudflare Workers
 ```
 
 ## Usage
@@ -102,20 +111,23 @@ MIT
 ## Cloudflare Resources
 
 ### AutoRAG
-alleato-docs
+- **Index**: alleato-docs
+- **Purpose**: Vector search for documents and meeting transcripts
 
-### D1 databases 
-alleato id:fc7c9a6d-ca65-4768-b3f9-07ec5afb38c5
-meeting-metadata id:c36bea3c-152a-4b89-b4de-ad193ef40c5e
+### D1 Databases
+- **alleato**: `fc7c9a6d-ca65-4768-b3f9-07ec5afb38c5` (Main database)
+- **megan_personal**: `f450193b-9536-4ada-8271-2a8cd917069e` (Personal database)
 
-CREATE TABLE meetings (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    date TEXT NOT NULL,
-    duration INTEGER,
-    participants TEXT,
-    fireflies_id TEXT UNIQUE,
-    summary TEXT,
-    autorag_doc_ids TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)
+### R2 Bucket
+- **alleato**: Document and meeting transcript storage
+
+### Database Schema
+The app uses a comprehensive schema including:
+- Projects management
+- Meeting transcripts with AI insights
+- Task tracking
+- Document metadata
+- Financial tracking
+- Client management
+
+See `schema/enhanced-database-schema.sql` for full details.

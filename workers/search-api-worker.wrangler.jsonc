@@ -1,0 +1,27 @@
+{
+  "name": "alleato-search-api",
+  "main": "search-api-worker.ts",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  "vars": {
+    "NODE_ENV": "production"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "ALLEATO_DB",
+      "database_name": "alleato",
+      "database_id": "fc7c9a6d-ca65-4768-b3f9-07ec5afb38c5"
+    }
+  ],
+
+  "ai": {
+    "binding": "AI"
+  }
+}

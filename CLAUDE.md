@@ -1,9 +1,29 @@
 # CLAUDE.md
 
-ALWAYS test in playwright before completing a task to make sure everything is working.
-Use Cloudflare Workers MCP anytime you need information on things such as R2 Bucket Files, D1 database information, Agents, ect.
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+
+## Rules
+
+### ALWAYS test BEFORE marking tasks as complete
+CRITICAL: You MUST test using the Playwright MCP server BEFORE saying a task is complete or marking it as done. This is a hard requirement - no exceptions. If you cannot test, you cannot claim the task is complete.
+
+### Task Completion Rule
+NEVER say "I've completed [task]" or mark a task as done without:
+1. Actually running tests using Playwright MCP server
+2. Verifying the functionality works in the browser
+3. Confirming no errors occur during testing
+
+If testing fails or you cannot test, you must say "I've implemented [task] but need to test it" instead of claiming completion.
+
+### Use Cloudflare Workers MCP anytime you need information on things such as R2 Bucket Files, D1 database information, Agents, ect.
+
+### Be proactive
+If you have the ability to complete an action or fix something, do it. Don't ask me to do something that you could have done. 
+
+The goal is to streamline and make the coding process as efficient as possible. It's just a waste of time for you to tell me to do something and then wait for me to do it rather than just doing it yourself.
+
+Again, remember to always test after new code is created to ensure it's working as intended and update documentation in CLAUDE.md and README.md.
 
 ## Overview
 ### RAG AI Chat Agent
@@ -42,26 +62,32 @@ Context-Aware Responses - The AI gets richer context about which documents to re
 
 Run development server:
 ```bash
-cd ai-agent-app
 npm run dev
 ```
 
 Build for production:
 ```bash
-cd ai-agent-app
 npm run build
 ```
 
 Run production server:
 ```bash
-cd ai-agent-app
 npm run start
 ```
 
 Lint code:
 ```bash
-cd ai-agent-app
 npm run lint
+```
+
+Sync documents:
+```bash
+./scripts/sync-documents.sh
+```
+
+Setup and sync:
+```bash
+./scripts/setup-and-sync.sh
 ```
 
 ## Assistant Guidelines
@@ -86,7 +112,7 @@ When a command executes:
 
 ## Architecture Overview
 
-This is a Next.js 15 AI agent application that provides a chat interface for interacting with documents through Cloudflare AutoRAG. The app integrates with Fireflies.ai for meeting transcription sync.
+This is a Next.js 15 AI agent application that provides an intelligent business assistant interface for interacting with documents and meeting transcripts through Cloudflare AutoRAG. The app integrates with Fireflies.ai for automated meeting transcription sync and provides AI-powered business intelligence.
 
 ### Key Components
 
@@ -122,9 +148,20 @@ This is a Next.js 15 AI agent application that provides a chat interface for int
 ### Project Structure
 
 - `app/`: Next.js app directory with pages and API routes
+  - `api/`: Backend endpoints for chat, documents, and meeting sync
+  - `dashboard/`: Dashboard pages with analytics
+  - `tables/`: Data table views for documents and projects
 - `components/`: React components organized by feature
+  - `chat/`: Chat interface components
+  - `dashboard/`: Dashboard and analytics components
+  - `ui/`: Reusable UI components (Radix UI based)
+- `docs/`: Documentation files
 - `lib/`: Utility functions and shared code
+  - `workers-reference/`: Cloudflare Workers reference implementations
 - `public/`: Static assets
+- `schema/`: Database schema files
+- `scripts/`: Utility scripts for setup and sync
+- `workers/`: Cloudflare Workers implementations
 
 ### Development Notes
 

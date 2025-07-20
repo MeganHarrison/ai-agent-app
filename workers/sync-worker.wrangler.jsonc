@@ -1,0 +1,61 @@
+{
+  "name": "alleato-sync-worker",
+  "main": "sync-worker.ts",
+  "compatibility_date": "2025-03-07",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  "vars": {
+    "NODE_ENV": "production"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "ALLEATO_DB",
+      "database_name": "alleato",
+      "database_id": "fc7c9a6d-ca65-4768-b3f9-07ec5afb38c5"
+    }
+  ],
+
+  "r2_buckets": [
+    {
+      "binding": "ALLEATO_DOCUMENTS",
+      "bucket_name": "alleato"
+    }
+  ],
+
+  "ai": {
+    "binding": "AI"
+  },
+
+  "triggers": {
+    "crons": [
+      "0 */6 * * *"
+    ]
+  },
+
+  "env": {
+    "development": {
+      "name": "alleato-sync-worker-dev",
+      "vars": {
+        "NODE_ENV": "development"
+      }
+    },
+    "staging": {
+      "name": "alleato-sync-worker-staging", 
+      "vars": {
+        "NODE_ENV": "staging"
+      }
+    },
+    "production": {
+      "name": "alleato-sync-worker-prod",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
